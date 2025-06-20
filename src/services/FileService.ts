@@ -1,5 +1,4 @@
 
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { BluetoothEvent } from '../types';
 
 export class FileService {
@@ -23,12 +22,20 @@ export class FileService {
 
       const fileName = `bluetooth-events-${new Date().toISOString().split('T')[0]}.csv`;
 
-      await Filesystem.writeFile({
-        path: fileName,
-        data: csvContent,
-        directory: Directory.Documents,
-        encoding: Encoding.UTF8
-      });
+      // For web environment, use browser download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', fileName);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      URL.revokeObjectURL(url);
 
       console.log('CSV file exported successfully:', fileName);
     } catch (error) {
@@ -39,10 +46,8 @@ export class FileService {
 
   async requestPermissions(): Promise<void> {
     try {
-      const permissions = await Filesystem.requestPermissions();
-      if (permissions.publicStorage !== 'granted') {
-        throw new Error('File system permission not granted');
-      }
+      // In web environment, no explicit file permissions needed for downloads
+      console.log('File permissions handled by browser');
     } catch (error) {
       console.error('Failed to request file permissions:', error);
       throw error;
