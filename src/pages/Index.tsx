@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { useBluetoothTracking } from '../hooks/useBluetoothTracking';
+import { useNativeBluetoothTracking } from '../hooks/useNativeBluetoothTracking';
 import { ConnectionStatus } from '../components/ConnectionStatus';
 import { EventsList } from '../components/EventsList';
 import { MapView } from '../components/MapView';
@@ -16,12 +15,13 @@ const Index = () => {
     events,
     currentDevice,
     settings,
-    isSimulating,
+    isTracking,
+    isInitialized,
     setSettings,
-    simulateConnection,
-    toggleSimulation,
+    startTracking,
+    stopTracking,
     exportToCSV,
-  } = useBluetoothTracking();
+  } = useNativeBluetoothTracking();
 
   const [selectedEvent, setSelectedEvent] = useState<BluetoothEvent | null>(null);
 
@@ -33,18 +33,22 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">Beat Buddy Tracker</h1>
-              <p className="text-white/80">Monitor your Bluetooth device connections</p>
+              <p className="text-white/80">Native Android Bluetooth Tracker</p>
             </div>
             <div className="flex items-center space-x-4">
               <Badge variant="outline" className="bg-white/20 text-white border-white/30">
                 {events.length} events logged
               </Badge>
+              <Badge variant="outline" className="bg-white/20 text-white border-white/30">
+                {isInitialized ? (isTracking ? 'Tracking Active' : 'Ready') : 'Initializing...'}
+              </Badge>
               <Button
-                onClick={toggleSimulation}
-                variant={isSimulating ? "destructive" : "secondary"}
+                onClick={isTracking ? stopTracking : startTracking}
+                variant={isTracking ? "destructive" : "secondary"}
                 size="lg"
+                disabled={!isInitialized}
               >
-                {isSimulating ? 'Stop Simulation' : 'Start Simulation'}
+                {isTracking ? 'Stop Tracking' : 'Start Tracking'}
               </Button>
             </div>
           </div>
@@ -54,34 +58,29 @@ const Index = () => {
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Current Status */}
         <div className="mb-8">
-          <ConnectionStatus device={currentDevice} isSimulating={isSimulating} />
+          <ConnectionStatus device={currentDevice} isSimulating={isTracking} />
         </div>
 
-        {/* Demo Actions */}
+        {/* Native Features Info */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Demo Controls</CardTitle>
+            <CardTitle>Native Android Features</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-3">
-              <Button 
-                onClick={simulateConnection} 
-                variant="outline"
-                disabled={!settings.trackingEnabled}
-              >
-                Simulate Connection Event
-              </Button>
-              <Button 
-                onClick={() => setSelectedEvent(events[0] || null)} 
-                variant="outline"
-                disabled={events.length === 0}
-              >
-                View Latest Event Location
-              </Button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${isInitialized ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                <span>Native Services: {isInitialized ? 'Ready' : 'Initializing'}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${isTracking ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                <span>Bluetooth Monitoring: {isTracking ? 'Active' : 'Stopped'}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${settings.locationEnabled ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                <span>GPS Tracking: {settings.locationEnabled ? 'Enabled' : 'Disabled'}</span>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground mt-3">
-              * This is a web simulation. The real Android app would automatically detect Bluetooth events.
-            </p>
           </CardContent>
         </Card>
 
@@ -130,14 +129,21 @@ const Index = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Technical Note */}
-        <Card className="mt-8 border-blue-200 bg-blue-50">
+        {/* Updated Technical Note */}
+        <Card className="mt-8 border-green-200 bg-green-50">
           <CardContent className="p-6">
-            <h3 className="font-semibold text-blue-900 mb-2">🚀 Ready for Mobile Conversion</h3>
-            <p className="text-blue-700 text-sm">
-              This web app can be converted to a native Android app using Capacitor. The real Android implementation would include:
-              native Bluetooth APIs, background services, precise GPS tracking, and full Google Maps integration.
+            <h3 className="font-semibold text-green-900 mb-2">✅ Native Android App Ready</h3>
+            <p className="text-green-700 text-sm mb-3">
+              This app now uses Capacitor with native Android services for real Bluetooth and GPS tracking. 
+              The native features include background monitoring, proper permissions, and local database storage.
             </p>
+            <div className="text-green-600 text-xs space-y-1">
+              <div>• Real Bluetooth Low Energy scanning and device monitoring</div>
+              <div>• Native GPS location services with battery optimization</div>
+              <div>• Local SQLite database for persistent event storage</div>
+              <div>• Native file system access for CSV export to Documents folder</div>
+              <div>• Background service capabilities for continuous monitoring</div>
+            </div>
           </CardContent>
         </Card>
       </div>
